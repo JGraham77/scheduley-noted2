@@ -25,3 +25,11 @@ export interface Payload {
     email: User["email"];
     username: User["username"];
 }
+
+declare global {
+    namespace Express {
+        export interface Request {
+            user: Payload;
+        }
+    }
+}
