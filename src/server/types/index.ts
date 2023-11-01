@@ -7,6 +7,7 @@ export interface User {
     phone: string;
     email_verified: boolean;
     phone_verified: boolean;
+    mfa_preference: "none" | "email" | "phone";
 }
 
 export interface Event {
