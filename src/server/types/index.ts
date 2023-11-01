@@ -18,3 +18,10 @@ export interface Event {
     description?: string;
     date_time: string;
 }
+
+export interface Payload {
+    id: User["id"];
+    name: User["name"];
+    email: User["email"];
+    username: User["username"];
+}
