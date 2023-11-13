@@ -18,7 +18,7 @@ const create = ({ name, email, username, password, phone }: BaseUser) =>
 const update_mfa = (preference: User["mfa_preference"], id: User["id"]) =>
     Query("UPDATE users SET mfa_preference=$1 WHERE id=$2", [preference, id]);
 
-const verify = (email: string) => Query("UPDATE users SET email_verified=1 WHERE email=$1", [email]);
+const verify = (email: string) => Query("UPDATE users SET email_verified=true WHERE email=$1", [email]);
 
 export default {
     find_by,
