@@ -4,7 +4,7 @@ import type { BaseUser, User } from "../../types";
 type Columns = "id" | "email" | "username";
 
 const find_by = (column: Columns, value: string | number) =>
-    Query<User[]>("SELECT * FROM users WHERE $1=$2", [column, value]);
+    Query<User[]>(`SELECT * FROM users WHERE ${column}=$1`, [value]);
 
 const create = ({ name, email, username, password, phone }: BaseUser) =>
     Query("INSERT INTO Users (name, email, username, password, phone) VALUES ($1, $2, $3, $4, $5) RETURNING id", [
