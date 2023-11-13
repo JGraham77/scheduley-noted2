@@ -3,6 +3,7 @@ import type { RequestHandler } from "express";
 import db from "../db";
 import utils from "../utils";
 import type { BaseUser } from "../types";
+import { sendVerificationEmail } from "../services/mailer";
 
 const register: RequestHandler = async (req, res, next) => {
     const { name, email, password, username, phone } = req.body;
@@ -19,7 +20,7 @@ const register: RequestHandler = async (req, res, next) => {
         const { rows } = await db.users.create(newUser);
         const id = rows[0].id;
 
-        //! TODO: Send email verification link
+        await sendVerificationEmail(email);
 
         res.status(201).json({ message: "Successfully created account!", id });
     } catch (error) {
@@ -46,7 +47,7 @@ const login: RequestHandler = async (req, res, next) => {
         if (!passwords_match) return res.status(401).json({ message: "Invalid credentials" });
 
         if (!user.email_verified) {
-            // resend the email with a new code
+            await sendVerificationEmail(email);
             return res.status(403).json({
                 message:
                     "You must verify your email before logging in, please check your inbox for a new email (code will expire in 10 minutes).",

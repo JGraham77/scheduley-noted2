@@ -1,7 +1,10 @@
+import jwt from "jsonwebtoken";
 import type { RequestHandler } from "express";
 import db from "../db";
+import config from "../config";
 import utils from "../utils";
 import { User } from "../types";
+import { sendVerificationEmail } from "../services/mailer";
 
 const change_mfa: RequestHandler = async (req, res, next) => {
     const { preference } = req.body as { preference: User["mfa_preference"] };
@@ -35,6 +38,26 @@ const change_mfa: RequestHandler = async (req, res, next) => {
     }
 };
 
+const verify: RequestHandler = async (req, res, next) => {
+    const type = req.query.type;
+    const token = req.query.token;
+
+    if (!token || !type || typeof token !== "string" || typeof type !== "string") {
+        return res.status(401).json({ message: "Missing auth information" });
+    }
+
+    try {
+        const { email } = jwt.verify(token, config.jwt.secret) as { email: string };
+        await db.users.verify(email);
+        res.status(200).json({ message: "You are verified!!!" });
+    } catch (error) {
+        const { email } = jwt.decode(token) as { email: string };
+        await sendVerificationEmail(email);
+        res.status(401).json({ message: "Invalid toke, please check your email for a new link" });
+    }
+};
+
 export default {
     change_mfa,
+    verify,
 };
