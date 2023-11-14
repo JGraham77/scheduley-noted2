@@ -38,10 +38,10 @@ if (hasUndefinedValues(domain)) throw new Error("Missing Domain Envars");
 
 // Get a twilio account up and running
 const twilio = {
-    gvoice: process.env.GVOICE_NUM,
-    number: process.env.TWILIO_NUM,
-    sid: process.env.TWILIO_SID,
-    token: process.env.TWILIO_TOKEN,
+    gvoice: process.env.GVOICE_NUM as string,
+    number: process.env.TWILIO_NUM as string,
+    sid: process.env.TWILIO_SID as string,
+    token: process.env.TWILIO_TOKEN as string,
 };
 
 if (hasUndefinedValues(twilio)) throw new Error("Missing Twilio Envars");
