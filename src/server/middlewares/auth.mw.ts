@@ -4,6 +4,7 @@ import db from "../db";
 import utils from "../utils";
 import type { BaseUser } from "../types";
 import { sendVerificationEmail } from "../services/mailer";
+import sms from "../services/sms";
 
 const register: RequestHandler = async (req, res, next) => {
     const { name, email, password, username, phone } = req.body;
@@ -34,8 +35,13 @@ const register: RequestHandler = async (req, res, next) => {
         const id = rows[0].id;
 
         await sendVerificationEmail(email);
+        await sms.generateAuthCode(id, phone);
 
-        res.status(201).json({ message: "Successfully created account!", id });
+        res.status(201).json({
+            message:
+                "Successfully created account!  Please check your email and text messages to get further info on verification.",
+            id,
+        });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Could not register user account at this time" });
@@ -64,6 +70,12 @@ const login: RequestHandler = async (req, res, next) => {
             return res.status(403).json({
                 message:
                     "You must verify your email before logging in, please check your inbox for a new email (code will expire in 10 minutes).",
+            });
+        } else if (!user.phone_verified) {
+            await sms.generateAuthCode(user.id, user.phone);
+            return res.status(403).json({
+                message:
+                    "You must verify your phone before logging in, please check your text messages for a new text (code will expire in 15 minutes).",
             });
         } else {
             const { id, email, username, name, email_verified, phone_verified } = user;
