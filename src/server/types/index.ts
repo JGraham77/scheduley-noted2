@@ -5,11 +5,19 @@ export interface BaseUser {
     password: string;
     phone: string;
 }
+
 export interface User extends BaseUser {
     id: number;
     email_verified: boolean;
     phone_verified: boolean;
     mfa_preference: "none" | "email" | "phone";
+}
+
+export interface Code {
+    code: number;
+    user_id: User["id"];
+    issued: number;
+    expiration: number;
 }
 
 export interface Event {

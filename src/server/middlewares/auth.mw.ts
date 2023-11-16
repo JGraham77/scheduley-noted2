@@ -14,6 +14,19 @@ const register: RequestHandler = async (req, res, next) => {
         return res.status(400).json({ message: "Missing some values or some values may not be filled out.", badVals });
     }
 
+    const sanitizedPhone = "+" + phone.replace(/^\d+/g, "");
+    const isPhone = sanitizedPhone.match(/\+\d+/g);
+
+    if (!isPhone) {
+        return res.status(400).json({ message: "Must have a phone number in the format of +18775551234" });
+    }
+
+    const isEmail = email.match(/^\S+@\S+\.\S+$/g);
+
+    if (!isEmail) {
+        return res.status(400).json({ message: "Must have a valid email" });
+    }
+
     const newUser: BaseUser = { name, email, password, username, phone };
     try {
         newUser.password = await bcrypt.hash(password, 12);
