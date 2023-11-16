@@ -20,9 +20,12 @@ const update_mfa = (preference: User["mfa_preference"], id: User["id"]) =>
 
 const verify = (email: string) => Query("UPDATE users SET email_verified=true WHERE email=$1", [email]);
 
+const verifyPhone = (id: number) => Query("UPDATE users SET phone_verified=true WHERE email=$1", [id]);
+
 export default {
     find_by,
     create,
     update_mfa,
     verify,
+    verifyPhone,
 };

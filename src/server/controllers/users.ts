@@ -5,6 +5,7 @@ import config from "../config";
 import utils from "../utils";
 import { User } from "../types";
 import { sendVerificationEmail } from "../services/mailer";
+import sms from "../services/sms";
 
 const change_mfa: RequestHandler = async (req, res, next) => {
     const { preference } = req.body as { preference: User["mfa_preference"] };
@@ -17,14 +18,18 @@ const change_mfa: RequestHandler = async (req, res, next) => {
     }
 
     try {
+        const [user] = await db.users.find_by("id", id);
+        if (!user) return res.status(401).json({ message: "Invalid credentials" });
+
         if (preference === "phone" && !phone_verified) {
-            // ! TODO: Send SMS to verify phone
+            await sms.generateAuthCode(id, user.phone);
             return res.status(400).json({
                 message:
                     "Cannot change MFA preference to SMS without verifying your phone, please check your phone for a new code to verify.",
             });
         }
         if (preference === "email" && !email_verified) {
+            await sendVerificationEmail(user.email);
             return res.status(400).json({
                 message:
                     "Cannot change MFA preference to email without verifying your email, please check your inbox for a new code to verify.",
@@ -57,7 +62,39 @@ const verify: RequestHandler = async (req, res, next) => {
     }
 };
 
+const verifyPhone: RequestHandler = async (req, res, next) => {
+    const { code, email } = req.body;
+
+    try {
+        const [user] = await db.users.find_by("email", email);
+        if (!user) return res.status(401).json({ message: "Invalid credentials" });
+
+        const [dbCode] = await db.codes.getForUser(user.id, code);
+        if (!dbCode) {
+            await sms.generateAuthCode(user.id, user.phone);
+            return res.status(401).json({ message: "Invalid credentials" });
+        }
+
+        const { code: storedCode, expiration } = dbCode;
+
+        if (storedCode != code || Date.now() > expiration) {
+            await db.codes.deleteForUser(user.id);
+            await sms.generateAuthCode(user.id, user.phone);
+            return res
+                .status(403)
+                .json({ message: "Code was invalid or expired, please check your text messages for a new code" });
+        }
+
+        await db.users.verifyPhone(user.id);
+        res.status(201).json({ message: "Successfully verified your phone!" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Unable to verify phone at this time" });
+    }
+};
+
 export default {
     change_mfa,
     verify,
+    verifyPhone,
 };
